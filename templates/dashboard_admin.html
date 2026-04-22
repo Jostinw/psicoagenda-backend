@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — PsicoAgenda{% endblock %}
+{% block body %}
+
+<div style="display:flex;">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🧠</div>
+      <h1>PsicoAgenda</h1>
+      <p>Panel del psicólogo</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link active"><span class="icon">📊</span> Dashboard</a>
+      <a href="{{ url_for('citas.citas') }}" class="nav-link"><span class="icon">📅</span> Citas</a>
+      <a href="{{ url_for('pacientes.pacientes') }}" class="nav-link"><span class="icon">👥</span> Pacientes</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-card">
+        <div class="user-avatar">{{ current_user.nombre[:2].upper() }}</div>
+        <div>
+          <div class="user-name">{{ current_user.nombre.split()[0] }}</div>
+          <div class="user-role">Administrador</div>
+        </div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="logout-btn" style="display:block;margin-top:10px;font-size:12px;color:#A32D2D;">Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">{{ hoy.strftime('%A, %d de %B de %Y') }}</div>
+      </div>
+      <button class="btn btn-primary" onclick="document.getElementById('modalNuevaCita').classList.add('open')">+ Nueva cita</button>
+    </div>
+
+    <div class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <!-- Métricas -->
+      <div class="grid-metrics">
+        <div class="metric purple"><div class="num">{{ total_mes }}</div><div class="lbl">Citas este mes</div></div>
+        <div class="metric teal"><div class="num">{{ pacientes }}</div><div class="lbl">Pacientes activos</div></div>
+        <div class="metric amber"><div class="num">{{ citas_hoy|length }}</div><div class="lbl">Citas hoy</div></div>
+        <div class="metric red"><div class="num">{{ pendientes }}</div><div class="lbl">Por confirmar</div></div>
+      </div>
+
+      <!-- Citas de hoy -->
+      <div class="card">
+        <h2 style="font-size:15px;font-weight:600;margin-bottom:16px;">Citas de hoy</h2>
+        {% if citas_hoy %}
+        <table>
+          <thead><tr>
+            <th>Paciente</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Acciones</th>
+          </tr></thead>
+          <tbody>
+          {% for c in citas_hoy %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar">{{ c.paciente.nombre[:2].upper() }}</div>
+                <div>
+                  <div style="font-weight:500;">{{ c.paciente.nombre }}</div>
+                  <div style="font-size:11px;color:#6b6890;">{{ c.paciente.telefono or '—' }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ c.hora }}</td>
+            <td>{{ c.tipo }}</td>
+            <td><span class="badge badge-{{ c.estado }}">{{ c.estado.capitalize() }}</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                {% if c.estado == 'pendiente' %}
+                <form method="POST" action="{{ url_for('citas.cambiar_estado', cita_id=c.id) }}">
+                  <input type="hidden" name="estado" value="confirmada"/>
+                  <button type="submit" class="btn btn-outline btn-sm">✓ Confirmar</button>
+                </form>
+                {% endif %}
+                {% if c.estado in ['pendiente','confirmada'] %}
+                <form method="POST" action="{{ url_for('citas.cambiar_estado', cita_id=c.id) }}">
+                  <input type="hidden" name="estado" value="completada"/>
+                  <button type="submit" class="btn btn-outline btn-sm">✓ Completar</button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p style="color:#6b6890;text-align:center;padding:24px;">No hay citas para hoy.</p>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal nueva cita -->
+<div class="modal-overlay" id="modalNuevaCita">
+  <div class="modal">
+    <h2>📅 Nueva cita</h2>
+    <form method="POST" action="{{ url_for('citas.nueva_cita') }}">
+      <div class="form-group">
+        <label>Paciente</label>
+        <select name="paciente_id" class="form-control" required>
+          <option value="">Seleccionar paciente...</option>
+          {% for p in [] %}{% endfor %}
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" name="fecha" class="form-control" required/>
+        </div>
+        <div class="form-group">
+          <label>Hora</label>
+          <select name="hora" class="form-control" required>
+            <option>08:00</option><option>09:00</option><option>10:00</option>
+            <option>11:00</option><option>12:00</option><option>14:00</option>
+            <option>15:00</option><option>16:00</option><option>17:00</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tipo de sesión</label>
+        <select name="tipo" class="form-control">
+          <option>Sesión inicial</option>
+          <option>Seguimiento</option>
+          <option>Terapia de pareja</option>
+          <option>Urgencia</option>
+          <option>Evaluación psicológica</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notas (opcional)</label>
+        <textarea name="notas" class="form-control" rows="2" placeholder="Observaciones previas..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('modalNuevaCita').classList.remove('open')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Agendar cita</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('modalNuevaCita').addEventListener('click', function(e){
+  if(e.target === this) this.classList.remove('open');
+});
+// Cargar pacientes vía fetch
+fetch('/api/citas').then(()=>{});
+fetch('/pacientes').then(r=>r.text()).then(html=>{
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  // Obtener lista de pacientes desde la API
+});
+</script>
+{% endblock %}

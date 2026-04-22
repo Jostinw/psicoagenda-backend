@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Iniciar sesión — PsicoAgenda</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --purple: #534AB7; --purple-light: #EEEDFE; --purple-dark: #3C3489; --border: #e5e3f5; --text: #1a1830; --text-muted: #6b6890; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #EEEDFE 0%, #f0f4ff 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: #fff; border-radius: 16px; padding: 36px 32px; width: 100%; max-width: 400px; box-shadow: 0 4px 40px rgba(83,74,183,.12); }
+    .logo { text-align: center; margin-bottom: 28px; }
+    .logo-icon { width: 56px; height: 56px; background: var(--purple-light); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 26px; }
+    .logo h1 { font-size: 20px; font-weight: 600; color: var(--text); }
+    .logo p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); font-family: inherit; transition: border .15s; }
+    .form-control:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 3px rgba(83,74,183,.1); }
+    .btn-primary { width: 100%; padding: 11px; background: var(--purple); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; transition: background .15s; margin-top: 4px; }
+    .btn-primary:hover { background: var(--purple-dark); }
+    .footer-text { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 16px; }
+    .footer-text a { color: var(--purple); font-weight: 500; }
+    .alert { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; background: #FCEBEB; color: #A32D2D; }
+    .demo-box { background: var(--purple-light); border-radius: 8px; padding: 12px; margin-top: 16px; font-size: 12px; color: var(--text-muted); }
+    .demo-box strong { color: var(--purple); display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🧠</div>
+    <h1>PsicoAgenda</h1>
+    <p>Gestión de citas psicológicas</p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+    <div class="form-group">
+      <label>Correo electrónico</label>
+      <input type="email" name="email" class="form-control" placeholder="tu@correo.com" required/>
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" name="password" class="form-control" placeholder="••••••••" required/>
+    </div>
+    <button type="submit" class="btn-primary">Iniciar sesión</button>
+  </form>
+
+  <p class="footer-text">¿No tienes cuenta? <a href="{{ url_for('auth.registro') }}">Regístrate</a></p>
+
+  <div class="demo-box">
+    <strong>🔑 Cuentas de demo</strong>
+    Admin: admin@psico.com / admin123<br>
+    Paciente: ana@demo.com / paciente123
+  </div>
+</div>
+</body>
+</html>

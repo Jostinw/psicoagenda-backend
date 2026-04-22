@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Citas — PsicoAgenda{% endblock %}
+{% block body %}
+
+<div style="display:flex;">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🧠</div>
+      <h1>PsicoAgenda</h1>
+      <p>Panel del psicólogo</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+      <a href="{{ url_for('citas.citas') }}" class="nav-link active"><span class="icon">📅</span> Citas</a>
+      <a href="{{ url_for('pacientes.pacientes') }}" class="nav-link"><span class="icon">👥</span> Pacientes</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-card">
+        <div class="user-avatar">{{ current_user.nombre[:2].upper() }}</div>
+        <div>
+          <div class="user-name">{{ current_user.nombre.split()[0] }}</div>
+          <div class="user-role">Administrador</div>
+        </div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" style="display:block;margin-top:10px;font-size:12px;color:#A32D2D;">Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Todas las citas</div>
+        <div class="page-sub">{{ citas|length }} citas en total</div>
+      </div>
+      <button class="btn btn-primary" onclick="document.getElementById('modalNuevaCita').classList.add('open')">+ Nueva cita</button>
+    </div>
+
+    <div class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <!-- Filtros -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm filtro active" data-estado="todos">Todos</button>
+        <button class="btn btn-outline btn-sm filtro" data-estado="pendiente">Pendientes</button>
+        <button class="btn btn-outline btn-sm filtro" data-estado="confirmada">Confirmadas</button>
+        <button class="btn btn-outline btn-sm filtro" data-estado="completada">Completadas</button>
+        <button class="btn btn-outline btn-sm filtro" data-estado="cancelada">Canceladas</button>
+      </div>
+
+      <div class="card" style="overflow-x:auto;">
+        <table id="tablaCitas">
+          <thead><tr>
+            <th>Paciente</th><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Acciones</th>
+          </tr></thead>
+          <tbody>
+          {% for c in citas %}
+          <tr data-estado="{{ c.estado }}">
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar">{{ c.paciente.nombre[:2].upper() }}</div>
+                <div>
+                  <div style="font-weight:500;">{{ c.paciente.nombre }}</div>
+                  <div style="font-size:11px;color:#6b6890;">{{ c.paciente.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ c.fecha.strftime('%d/%m/%Y') }}</td>
+            <td>{{ c.hora }}</td>
+            <td>{{ c.tipo }}</td>
+            <td><span class="badge badge-{{ c.estado }}">{{ c.estado.capitalize() }}</span></td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                {% if c.estado == 'pendiente' %}
+                <form method="POST" action="{{ url_for('citas.cambiar_estado', cita_id=c.id) }}">
+                  <input type="hidden" name="estado" value="confirmada"/>
+                  <button type="submit" class="btn btn-outline btn-sm">✓ Confirmar</button>
+                </form>
+                {% endif %}
+                {% if c.estado in ['pendiente','confirmada'] %}
+                <form method="POST" action="{{ url_for('citas.cambiar_estado', cita_id=c.id) }}">
+                  <input type="hidden" name="estado" value="cancelada"/>
+                  <button type="submit" class="btn btn-danger btn-sm">✕ Cancelar</button>
+                </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('citas.eliminar_cita', cita_id=c.id) }}" onsubmit="return confirm('¿Eliminar esta cita?')">
+                  <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% if not citas %}
+        <p style="text-align:center;padding:32px;color:#6b6890;">No hay citas registradas.</p>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal nueva cita -->
+<div class="modal-overlay" id="modalNuevaCita">
+  <div class="modal">
+    <h2>📅 Nueva cita</h2>
+    <form method="POST" action="{{ url_for('citas.nueva_cita') }}">
+      <div class="form-group">
+        <label>Paciente</label>
+        <select name="paciente_id" class="form-control" required>
+          <option value="">Seleccionar paciente...</option>
+          {% for p in pacientes %}
+          <option value="{{ p.id }}">{{ p.nombre }} — {{ p.email }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" name="fecha" class="form-control" required/>
+        </div>
+        <div class="form-group">
+          <label>Hora</label>
+          <select name="hora" class="form-control" required>
+            <option>08:00</option><option>09:00</option><option>10:00</option>
+            <option>11:00</option><option>12:00</option><option>14:00</option>
+            <option>15:00</option><option>16:00</option><option>17:00</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tipo de sesión</label>
+        <select name="tipo" class="form-control">
+          <option>Sesión inicial</option><option>Seguimiento</option>
+          <option>Terapia de pareja</option><option>Urgencia</option>
+          <option>Evaluación psicológica</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notas</label>
+        <textarea name="notas" class="form-control" rows="2" placeholder="Observaciones..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('modalNuevaCita').classList.remove('open')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Agendar cita</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.filtro').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filtro').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const estado = this.dataset.estado;
+    document.querySelectorAll('#tablaCitas tbody tr').forEach(row => {
+      row.style.display = (estado === 'todos' || row.dataset.estado === estado) ? '' : 'none';
+    });
+  });
+});
+document.getElementById('modalNuevaCita').addEventListener('click', function(e){
+  if(e.target === this) this.classList.remove('open');
+});
+</script>
+{% endblock %}

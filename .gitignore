@@ -1,0 +1,19 @@
+# Entornos Virtuales
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Bases de Datos Claves
+*.sqlite3
+*.db
+psicoagenda.db
+
+# Configuraciones Sensibles
+.env
+
+# Archivos del Sistema Operativo
+.DS_Store
+Thumbs.db
