@@ -112,7 +112,9 @@
         <label>Paciente</label>
         <select name="paciente_id" class="form-control" required>
           <option value="">Seleccionar paciente...</option>
-          {% for p in [] %}{% endfor %}
+          {% for p in pacientes_lista %}
+          <option value="{{ p.id }}">{{ p.nombre }} — {{ p.email }}</option>
+          {% endfor %}
         </select>
       </div>
       <div class="form-grid">
@@ -154,13 +156,6 @@
 <script>
 document.getElementById('modalNuevaCita').addEventListener('click', function(e){
   if(e.target === this) this.classList.remove('open');
-});
-// Cargar pacientes vía fetch
-fetch('/api/citas').then(()=>{});
-fetch('/pacientes').then(r=>r.text()).then(html=>{
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  // Obtener lista de pacientes desde la API
 });
 </script>
 {% endblock %}

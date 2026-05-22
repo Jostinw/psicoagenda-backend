@@ -8,8 +8,8 @@ __pycache__/
 
 # Bases de Datos Claves
 *.sqlite3
-*.db
-psicoagenda.db
+# *.db
+# psicoagenda.db
 
 # Configuraciones Sensibles
 .env
